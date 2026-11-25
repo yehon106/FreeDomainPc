@@ -127,7 +127,12 @@ class App:
     def provider_client(self, name=None):
         name = name or self.active_provider.get()
         item = self.cfg["providers"].get(name)
-        token = (keyring.get_password("FreeDomainServer", item.get("credential_key")) if item and item.get("credential_key") else (item.get("token") if item else None))
+        if item and item.get("token") and not item.get("credential_key"):
+            legacy_token = item.pop("token")
+            item["credential_key"] = f"{name.lower()}:api-token"
+            keyring.set_password("FreeDomainServer", item["credential_key"], legacy_token)
+            save_config(self.cfg)
+        token = keyring.get_password("FreeDomainServer", item.get("credential_key")) if item and item.get("credential_key") else None
         if not token:
             raise ProviderError(f"{name} is not configured yet. Click Connect / Configure.")
         if name == "Cloudflare": return Cloudflare(token)
@@ -151,7 +156,9 @@ class App:
         messagebox.showinfo(f"Connect {name}", instructions)
         token = simpledialog.askstring(f"{name} API token", "Paste your API token:", show="*")
         if not token: return
-        self.cfg["providers"][name] = {"token": token.strip()}
+        credential_key = f"{name.lower()}:api-token"
+        keyring.set_password("FreeDomainServer", credential_key, token.strip())
+        self.cfg["providers"][name] = {"credential_key": credential_key}
         save_config(self.cfg)
         self.refresh_providers()
         self.status.set(f"{name} credentials saved locally.")
