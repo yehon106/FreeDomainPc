@@ -6,6 +6,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 from pathlib import Path
 from .providers import Cloudflare, DeSEC, DuckDNS, ProviderError
+from .free_domains import FreeDomainsWindow
+import keyring
 
 APP_DIR = Path(os.environ.get("APPDATA", str(Path.home()))) / "FreeDomainServer"
 CONFIG = APP_DIR / "config.json"
@@ -117,6 +119,7 @@ class App:
         ttk.Button(actions, text="＋ Add record", style="Action.TButton", command=self.add_record).pack(side="left")
         ttk.Button(actions, text="Delete selected", command=self.delete_record).pack(side="left", padx=8)
         ttk.Button(actions, text="Vercel quick setup", command=self.vercel_setup).pack(side="left", padx=8)
+        ttk.Button(actions, text="Get a Free Domain", style="Action.TButton", command=lambda: FreeDomainsWindow(self.root, self)).pack(side="left", padx=8)
         ttk.Label(actions, textvariable=self.status).pack(side="right")
         ttk.Label(shell, text="Your websites can be hosted anywhere. This app manages DNS; it does not host website files.",
             foreground="#666").pack(anchor="w")
@@ -124,16 +127,18 @@ class App:
     def provider_client(self, name=None):
         name = name or self.active_provider.get()
         item = self.cfg["providers"].get(name)
-        if not item or not item.get("token"):
+        token = (keyring.get_password("FreeDomainServer", item.get("credential_key")) if item and item.get("credential_key") else (item.get("token") if item else None))
+        if not token:
             raise ProviderError(f"{name} is not configured yet. Click Connect / Configure.")
-        if name == "Cloudflare": return Cloudflare(item["token"])
-        if name == "deSEC": return DeSEC(item["token"])
-        if name == "DuckDNS": return DuckDNS(item["token"])
+        if name == "Cloudflare": return Cloudflare(token)
+        if name == "deSEC": return DeSEC(token)
+        if name == "DuckDNS": return DuckDNS(token)
         raise ProviderError("Unknown provider.")
 
     def refresh_providers(self):
         p = self.active_provider.get()
-        configured = bool(self.cfg["providers"].get(p, {}).get("token"))
+        item = self.cfg["providers"].get(p, {})
+        configured = bool(item.get("token") or (item.get("credential_key") and keyring.get_password("FreeDomainServer", item["credential_key"])))
         self.provider_state.config(text="Configured" if configured else "Not connected")
 
     def configure_provider(self):
