@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt pyinstaller
       - name: Build standalone application
-        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name FreeDomainServer --collect-all requests --paths . launcher.py
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name FreeDomainServer --collect-all requests --collect-all keyring --hidden-import keyring.backends.Windows --paths . launcher.py
       - name: Install WiX Toolset v4 and UI extension
         shell: pwsh
         run: |
