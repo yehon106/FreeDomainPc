@@ -1,0 +1,39 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package
+    Name="FreeDomain Server"
+    Manufacturer="Yehon106"
+    Version="1.0.0"
+    UpgradeCode="9D23B7E1-6B5C-4F2A-9E2C-4D86D5F0A1B7"
+    Language="1033"
+    Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of FreeDomain Server is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="FreeDomain Server" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="APPPROGRAMMENU" Name="FreeDomain Server" />
+    </StandardDirectory>
+    <Feature Id="MainFeature" Title="FreeDomain Server" Level="1">
+      <ComponentGroupRef Id="ApplicationFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+  </Package>
+  <Fragment>
+    <ComponentGroup Id="ApplicationFiles" Directory="INSTALLFOLDER">
+      <Component Id="FreeDomainServerExe" Guid="*">
+        <File Id="FreeDomainServerExeFile" Source="dist/FreeDomainServer.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+  <Fragment>
+    <Component Id="StartMenuShortcut" Directory="APPPROGRAMMENU" Guid="*">
+      <Shortcut Id="FreeDomainServerShortcut" Name="FreeDomain Server"
+        Target="[INSTALLFOLDER]FreeDomainServer.exe" WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveProgramMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKLM" Key="Software\FreeDomainServer" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>
