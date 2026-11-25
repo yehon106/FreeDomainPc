@@ -1,43 +1,43 @@
 # FreeDomain Server
 
-FreeDomain Server is a Windows desktop DNS manager for domains and DNS zones you already control. It manages DNS through supported provider APIs. It does not host website files or create arbitrary public domain endings.
+FreeDomain Server is a Windows desktop DNS manager. Its **Get a Free Domain** window lets users register and connect supported free hostnames from inside the application.
 
-## Download
+## Get a free hostname
 
-The published Windows installer is a single file named **FD.msi**. Open the repository's **Releases** page and download `FD.msi`. Double-click it to open the standard Windows Installer setup wizard. The wizard installs the complete app and creates a Start menu shortcut. No Python, command prompt, or separate EXE is required on the computer where the app is installed.
+### deSEC / dedyn.io
 
-## Build and publish
+The app includes the official deSEC registration flow:
 
-The GitHub Actions workflow builds the app on a Windows runner and attaches only `FD.msi` to the GitHub Release `v1.0.0`. After uploading these files to your repository, open **Actions → Build and publish FD.msi → Run workflow**. When the run succeeds, open **Releases** and download `FD.msi`. The MSI itself is a single file; GitHub may display it under the release assets.
+1. Enter an email, password, and desired hostname prefix.
+2. Load and solve the CAPTCHA inside the app.
+3. Submit the registration request for `yourname.dedyn.io`.
+4. Open the verification email and paste the activation link into the app.
+5. The app activates the account, signs in, stores the API token in Windows Credential Manager, and loads the registered domain.
 
-## DNS providers
+deSEC limits dedyn.io registrations to one domain per account. Email verification and CAPTCHA are required by the provider; they cannot be skipped.
 
-- **Cloudflare:** lists zones and manages DNS records through an API token.
-- **deSEC:** lists domains and manages DNS RRsets through an API token.
-- **DuckDNS:** supports updating the IP for a DuckDNS hostname only; it is not a general DNS zone editor.
+### dynv6 / dynv6.net
 
-The UI includes A, AAAA, CNAME, TXT, MX, NS, SRV, CAA, HTTPS, SVCB, TLSA, SSHFP, and NAPTR record types. Actual record support depends on the selected DNS provider.
+The app can create a hostname through the dynv6 REST API after you supply an API token. dynv6 does not expose account registration through that API, so a dynv6 account must already exist. The app cannot bypass this provider requirement.
 
-TXT record names with underscores are supported, including `_acme-challenge`, `_dmarc`, `_vercel`, and `_smtp._tls`. Root (`@`), wildcard (`*`), and multiple TXT records are supported where the provider allows them.
+### Other providers
 
-## Connect a site to Vercel
+- **Cloudflare:** manage DNS zones and records through an API token.
+- **deSEC:** manage DNS zones and records after connecting.
+- **DuckDNS:** update the IP address for an existing DuckDNS hostname.
 
-1. Add your domain in your Vercel project settings.
-2. Read the exact DNS instructions Vercel displays.
-3. Select the matching DNS zone in this app.
-4. Add the exact A, CNAME, and TXT records Vercel requests.
-5. Wait for DNS propagation and verify the domain in Vercel.
+## DNS records
 
-The quick setup action provides common Vercel targets only. Use project-specific values shown by Vercel if they differ.
+The app supports A, AAAA, CNAME, TXT, MX, NS, SRV, CAA, HTTPS, SVCB, TLSA, SSHFP, and NAPTR record types where supported by the provider. Underscore labels such as `_acme-challenge`, root (`@`), and wildcard labels are supported where the provider allows them.
 
-## Important limitations
+## Website hosting
 
-- This app cannot register arbitrary `.com`, `.net`, `.dev`, or other public top-level domains.
-- You must own a domain or have a delegated namespace and use a supported DNS provider.
-- Provider signup, domain approval, DNS delegation, and provider limits still apply.
-- DNS record support differs by provider.
-- The app does not turn your home PC into a public authoritative DNS service.
+The app manages DNS; it does not host website files or register arbitrary public top-level domains. To connect a hostname to Vercel or another host, use the exact DNS targets supplied by that hosting provider. Free hostnames remain subject to the issuing provider's terms and limits.
 
-## API token security
+## Installer
 
-Tokens are currently stored in `%APPDATA%\\FreeDomainServer\\config.json` without encryption. Use narrowly scoped API tokens and do not share this file. Windows Credential Manager integration is not included in this version.
+The GitHub Actions workflow builds a single `FD.msi` Windows Installer package. Run **Actions → Build and publish FD.msi → Run workflow**, then download `FD.msi` from the latest GitHub Release.
+
+## Credential storage
+
+New API tokens are stored using the Windows Credential Manager through Python keyring. Legacy tokens in the old JSON config are migrated to Credential Manager the next time that provider is used. The app does not save account passwords.
